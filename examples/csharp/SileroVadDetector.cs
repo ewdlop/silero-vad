@@ -5,7 +5,7 @@ namespace VadDotNet;
 
 public class SileroVadDetector
 {
-    private readonly SileroVadOnnxModel _model;
+    internal readonly SileroVadOnnxModel _model;
     private readonly float _threshold;
     private readonly float _negThreshold;
     private readonly int _samplingRate;
