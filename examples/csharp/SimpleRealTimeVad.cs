@@ -10,6 +10,9 @@ public class SimpleRealTimeVad : IDisposable
 {
     private readonly SileroVadOnnxModel _model;
     private readonly WaveInEvent _waveIn;
+    private readonly WaveOutEvent _waveOut;
+    private readonly EchoCancellationWaveProvider _echoCancellationProvider;
+    private readonly BufferedWaveProvider _bufferedWaveProvider;
     private readonly int _sampleRate;
     private readonly int _windowSize;
     private readonly float _threshold;
@@ -49,8 +52,39 @@ public class SimpleRealTimeVad : IDisposable
         };
         
         _waveIn.DataAvailable += OnDataAvailable;
+
+        _waveOut = new WaveOutEvent
+        {
+            DesiredLatency = 100 // 設置緩衝區延遲
+        };
+
+        _bufferedWaveProvider = new BufferedWaveProvider(_waveIn.WaveFormat)
+        {
+            ReadFully = true // 確保可以完整讀取緩衝區
+        };
+
+        _echoCancellationProvider = new EchoCancellationWaveProvider(20, 200, _bufferedWaveProvider);
+        _waveOut.Init(_echoCancellationProvider);
     }
     
+    public void Play()
+    {
+        if (_isDisposed) throw new ObjectDisposedException(nameof(SimpleRealTimeVad));
+        if (!_isRecording) throw new InvalidOperationException("請先開始錄音才能播放音頻。");
+        
+        _waveOut.Play();
+        Console.WriteLine("🔊 開始播放實時音頻...");
+    }
+
+    public void Stop()
+    {
+        if (_isDisposed) throw new ObjectDisposedException(nameof(SimpleRealTimeVad));
+        if (!_isRecording) throw new InvalidOperationException("請先開始錄音才能暫停播放。");
+        
+        _waveOut.Stop();
+        Console.WriteLine("⏸️ 暫停實時音頻播放...");
+    }
+
     public void StartRecording()
     {
         if (_isDisposed) throw new ObjectDisposedException(nameof(SimpleRealTimeVad));
@@ -127,8 +161,14 @@ public class SimpleRealTimeVad : IDisposable
             if (isSpeech)
             {
                 SpeechFramesDetected++;
+
+                var output = ConvertFloatsToBytes(window);
+                var cancelledOutput = new byte[output.Length];
+                _echoCancellationProvider.Cancel(output, cancelledOutput);
+                _bufferedWaveProvider.AddSamples(cancelledOutput, 0, cancelledOutput.Length);
             }
-            
+
+
             // 觸發語音活動事件
             VoiceActivityChanged?.Invoke(this, new VoiceActivityEventArgs
             {
@@ -222,7 +262,18 @@ public class SimpleRealTimeVad : IDisposable
         }
         return samples;
     }
-    
+
+    private byte[] ConvertFloatsToBytes(float[] samples)
+    {
+        var buffer = new byte[samples.Length * 2];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            short sample = (short)(samples[i] * 32768); // 將浮點數轉換為短整型
+            BitConverter.GetBytes(sample).CopyTo(buffer, i * 2);
+        }
+        return buffer;
+    }
+
     public void Dispose()
     {
         if (_isDisposed) return;

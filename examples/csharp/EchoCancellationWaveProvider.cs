@@ -53,12 +53,12 @@ namespace VadDotNet
         public int Read(byte[] buffer, int offset, int count)
         {
             int samplesRead = _source.Read(buffer, offset, count);
-            //if (samplesRead > 0)
-            //{
-            //    // Feed reference signal (speaker output) to echo canceller
-            //    _canceller.EchoPlayback(buffer);
-            //    return samplesRead;
-            //}
+            if (samplesRead > 0)
+            {
+                // Feed reference signal (speaker output) to echo canceller
+                _canceller.EchoPlayback(buffer);
+                return samplesRead;
+            }
             return samplesRead;
         }
 

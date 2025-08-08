@@ -42,7 +42,7 @@ public class SimpleVadExample
                 e.Cancel = true;
                 Console.WriteLine("\n⏹️ 正在停止語音檢測...");
                 vadDetector.StopRecording();
-                
+                vadDetector.Stop();
                 // 顯示最終統計
                 Console.WriteLine("\n📊 最終統計:");
                 Console.WriteLine($"   總處理幀數: {vadDetector.TotalFramesProcessed:N0}");
@@ -67,6 +67,7 @@ public class SimpleVadExample
             
             // 開始實時語音檢測
             vadDetector.StartRecording();
+            vadDetector.Play();
             
             // 保持程序運行
             Console.WriteLine("檢測已開始，請對著麥克風說話...");
