@@ -244,11 +244,12 @@ public class RealTimeVadDetector : IDisposable
     }
 }
 
-// 事件參數類
+// Event parameter classes
 public class SpeechDetectedEventArgs : EventArgs
 {
     public DateTime StartTime { get; set; }
     public float SpeechProbability { get; set; }
+    public byte[] InitialAudioData { get; set; } = [];
 }
 
 public class SpeechEndedEventArgs : EventArgs
@@ -257,6 +258,7 @@ public class SpeechEndedEventArgs : EventArgs
     public DateTime EndTime { get; set; }
     public TimeSpan Duration { get; set; }
     public float AverageProbability { get; set; }
+    public byte[] AudioData { get; set; } = [];
 }
 
 public class VoiceActivityEventArgs : EventArgs
@@ -265,4 +267,5 @@ public class VoiceActivityEventArgs : EventArgs
     public bool IsSpeech { get; set; }
     public DateTime Timestamp { get; set; }
     public int FrameIndex { get; set; }
-} 
+    public byte[] AudioData { get; set; } = [];
+}
